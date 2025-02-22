@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import SpeechToText from "../Components/SpeechToText";
 import Avatar from "../Components/Avatar";
-import Translate from "../Components/Translate";
+import Translate from "../Components/TranslationUI";
 
 const Home = () => {
     return (

@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "peerjs": "^1.5.4",
+    "simple-peer": "^9.11.1"
+  }
+}

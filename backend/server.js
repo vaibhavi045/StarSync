@@ -1,61 +1,110 @@
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
-const mongoose = require("mongoose");
 const helmet = require("helmet");
 const morgan = require("morgan");
+const mongoose = require("mongoose");
+const connectDB = require("./config/db");
+const { PeerServer } = require("peer");
+const { notFound, errorHandler } = require("./middleware/errorHandler");
 
 // Initialize Express app
 const app = express();
+
+// Middleware setup
 app.use(cors());
 app.use(express.json());
-app.use(express.urlencoded({ extended: true })); // Support URL-encoded data
-app.use(helmet()); // Security middleware
-app.use(morgan("dev")); // Logging middleware
+app.use(express.urlencoded({ extended: true }));
+app.use(helmet());
+app.use(morgan("dev"));
 
-// Environment Variables Validation
-if (!process.env.MONGO_URI) {
-    console.error("❌ MONGO_URI is not defined in .env file!");
+// Validate required environment variables
+const REQUIRED_ENV_VARS = ["MONGO_URI", "PORT"];
+const missingVars = REQUIRED_ENV_VARS.filter((key) => !process.env[key]);
+
+if (missingVars.length) {
+    console.error(`❌ ERROR: Missing required environment variables: ${missingVars.join(", ")}`);
     process.exit(1);
 }
 
 // Connect to MongoDB
-mongoose.connect(process.env.MONGO_URI, {})
-    .then(() => console.log("✅ MongoDB Connected"))
-    .catch((err) => {
-        console.error("❌ MongoDB Connection Error:", err);
-        process.exit(1);
-    });
+connectDB();
 
+// Safe route loading function
+const safeRequire = (routePath, routeName) => {
+    try {
+        const route = require(routePath);
+        console.log(`✅ Loaded route: ${routeName}`);
+        return route;
+    } catch (error) {
+        console.error(`❌ Failed to load route [${routeName}]: ${error.message}`);
+        return (req, res) => res.status(500).json({ error: `${routeName} route unavailable` });
+    }
+};
 
-// API Routes
+// Load API routes
+app.use("/api/auth", safeRequire("./Routes/auth", "Auth"));
+app.use("/api/speech-to-text", safeRequire("./Routes/speech", "Speech-to-Text"));
+app.use("/api/translate", safeRequire("./Routes/translate", "Translate"));
+app.use("/api/medical-data", safeRequire("./Models/MedicalData", "Medical Data"));
+app.use("/api/files", safeRequire("./Routes/fileUpload", "File Upload"));
+app.use("/api/files", safeRequire("./Routes/fileDelete", "File Delete"));
+
+// Root endpoint
 app.get("/", (req, res) => {
     res.send("🚀 Medical Screening API is Running...");
 });
 
-// Load additional API routes with error handling
-try {
-    app.use("/api/speech-to-text", require("./Routes/speech"));
-    app.use("/api/translate", require("./Routes/Translate"));
-} catch (error) {
-    console.error("❌ Error loading routes:", error);
-}
+// Handle 404 routes
+app.use(notFound);
 
-// Start Server
+// Global error handler
+app.use(errorHandler);
+
+// Start Express Server
 const PORT = process.env.PORT || 5000;
 const server = app.listen(PORT, () => {
-    console.log(`✅ Server is running on port ${PORT}`);
+    console.log(`✅ Express Server Running on Port ${PORT}`);
 });
+
+// Start PeerJS Server
+const peerServer = PeerServer({ port: 9000, path: "/peerjs" });
+console.log("✅ PeerJS Server Running on Port 9000");
 
 // Graceful Shutdown Handling
 const shutdown = async () => {
-    console.log("\n🔴 Shutting down gracefully...");
-    await mongoose.disconnect();
+    console.log("\n🔴 Initiating graceful shutdown...");
+
+    try {
+        await mongoose.connection.close();
+        console.log("✅ MongoDB Disconnected.");
+    } catch (error) {
+        console.error("⚠️ Error disconnecting MongoDB:", error.message);
+    }
+
+    peerServer._app.close(() => {
+        console.log("✅ PeerJS Server Closed.");
+    });
+
     server.close(() => {
-        console.log("✅ Server closed.");
+        console.log("✅ Express Server Closed.");
         process.exit(0);
     });
 };
 
-process.on("SIGINT", shutdown);  // Handle Ctrl+C
-process.on("SIGTERM", shutdown); // Handle termination signals (e.g., Docker, Kubernetes)
+// Handle termination signals
+["SIGINT", "SIGTERM"].forEach((signal) => {
+    process.on(signal, shutdown);
+});
+
+// Catch unexpected errors
+process.on("uncaughtException", (err) => {
+    console.error("❌ Uncaught Exception:", err.message);
+    console.error(err.stack);
+    shutdown();
+});
+
+process.on("unhandledRejection", (reason, promise) => {
+    console.error("❌ Unhandled Promise Rejection:", reason);
+    shutdown();
+});
