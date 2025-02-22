@@ -1,8 +1,10 @@
 const express = require("express");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const crypto = require("crypto");
 const User = require("../Models/User");
 const authMiddleware = require("../middleware/authMiddleware");
+const sendEmail = require("../utils/sendEmail");
 
 const router = express.Router();
 
@@ -16,33 +18,21 @@ router.post("/register", async (req, res) => {
     try {
         const { name, email, password } = req.body;
 
-        // Validate input fields
-        if (!name || !email || !password) {
-            return sendErrorResponse(res, "All fields are required");
-        }
+        if (!name || !email || !password) return sendErrorResponse(res, "All fields are required");
 
         // Email validation
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(email)) {
-            return sendErrorResponse(res, "Invalid email format");
-        }
+        if (!emailRegex.test(email)) return sendErrorResponse(res, "Invalid email format");
 
         // Password validation (minimum 6 characters)
-        if (password.length < 6) {
-            return sendErrorResponse(res, "Password must be at least 6 characters long");
-        }
+        if (password.length < 6) return sendErrorResponse(res, "Password must be at least 6 characters long");
 
-        // Check if user already exists
         let user = await User.findOne({ email });
-        if (user) {
-            return sendErrorResponse(res, "User already exists");
-        }
+        if (user) return sendErrorResponse(res, "User already exists");
 
-        // Hash password before saving
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
+        // Hash password
+        const hashedPassword = await bcrypt.hash(password, 10);
 
-        // Create new user
         user = new User({ name, email, password: hashedPassword });
         await user.save();
 
@@ -64,22 +54,13 @@ router.post("/login", async (req, res) => {
     try {
         const { email, password } = req.body;
 
-        // Validate input
-        if (!email || !password) {
-            return sendErrorResponse(res, "All fields are required");
-        }
+        if (!email || !password) return sendErrorResponse(res, "All fields are required");
 
-        // Check if user exists
         const user = await User.findOne({ email });
-        if (!user) {
-            return sendErrorResponse(res, "Invalid credentials");
-        }
+        if (!user) return sendErrorResponse(res, "Invalid credentials");
 
-        // Validate password
         const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) {
-            return sendErrorResponse(res, "Invalid credentials");
-        }
+        if (!isMatch) return sendErrorResponse(res, "Invalid credentials");
 
         // Generate JWT token
         const payload = { userId: user.id };
@@ -97,13 +78,81 @@ router.post("/login", async (req, res) => {
 // @access  Private
 router.get("/user", authMiddleware.authenticateUser, async (req, res) => {
     try {
-        const user = await User.findById(req.userId).select("-password"); // Exclude password field
-        if (!user) {
-            return sendErrorResponse(res, "User not found", 404);
-        }
+        const user = await User.findById(req.userId).select("-password");
+        if (!user) return sendErrorResponse(res, "User not found", 404);
         res.json(user);
     } catch (error) {
         console.error("❌ User Fetch Error:", error);
+        sendErrorResponse(res, "Server error", 500);
+    }
+});
+
+// ==========================
+// 🔹 Forgot Password Route
+// ==========================
+// @route   POST /api/auth/forgot-password
+// @desc    Sends a reset link to the user's email
+// @access  Public
+router.post("/forgot-password", async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        const user = await User.findOne({ email });
+        if (!user) return sendErrorResponse(res, "User not found", 404);
+
+        // Generate reset token
+        const resetToken = crypto.randomBytes(32).toString("hex");
+        const hashedToken = crypto.createHash("sha256").update(resetToken).digest("hex");
+
+        // Set reset token and expiry (valid for 1 hour)
+        user.resetPasswordToken = hashedToken;
+        user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
+        await user.save();
+
+        // Send email with reset link
+        const resetUrl = `${process.env.CLIENT_URL}/reset-password/${resetToken}`;
+        const message = `Click the link to reset your password: ${resetUrl}`;
+
+        await sendEmail(user.email, "Password Reset Request", message);
+
+        res.json({ message: "Password reset link sent to your email" });
+    } catch (error) {
+        console.error("❌ Forgot Password Error:", error);
+        sendErrorResponse(res, "Server error", 500);
+    }
+});
+
+// ==========================
+// 🔹 Reset Password Route
+// ==========================
+// @route   POST /api/auth/reset-password
+// @desc    Resets the password after clicking the link
+// @access  Public
+router.post("/reset-password", async (req, res) => {
+    try {
+        const { token, newPassword } = req.body;
+
+        if (!token || !newPassword) return sendErrorResponse(res, "Invalid request");
+
+        // Hash the token to compare with DB
+        const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+
+        const user = await User.findOne({
+            resetPasswordToken: hashedToken,
+            resetPasswordExpires: { $gt: Date.now() },
+        });
+
+        if (!user) return sendErrorResponse(res, "Invalid or expired token", 400);
+
+        // Update password
+        user.password = await bcrypt.hash(newPassword, 10);
+        user.resetPasswordToken = undefined;
+        user.resetPasswordExpires = undefined;
+        await user.save();
+
+        res.json({ message: "Password reset successful" });
+    } catch (error) {
+        console.error("❌ Reset Password Error:", error);
         sendErrorResponse(res, "Server error", 500);
     }
 });
