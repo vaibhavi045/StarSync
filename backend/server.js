@@ -46,7 +46,7 @@ const safeRequire = (routePath, routeName) => {
 app.use("/api/auth", safeRequire("./Routes/auth", "Auth"));
 app.use("/api/speech-to-text", safeRequire("./Routes/speech", "Speech-to-Text"));
 app.use("/api/translate", safeRequire("./Routes/translate", "Translate"));
-app.use("/api/medical-data", safeRequire("./Routes/medicalData", "Medical Data"));
+app.use("/api/medical-data", safeRequire("./Models/medicalData", "Medical Data"));
 app.use("/api/files/upload", safeRequire("./Routes/fileUpload", "File Upload"));
 app.use("/api/files/delete", safeRequire("./Routes/fileDelete", "File Delete"));
 
