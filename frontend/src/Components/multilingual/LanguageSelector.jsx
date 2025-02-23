@@ -5,7 +5,12 @@ const LanguageSelector = () => {
     const { language, setLanguage } = useContext(LanguageContext);
 
     const handleLanguageChange = (event) => {
-        setLanguage(event.target.value);
+        if (typeof setLanguage === "function") {
+            setLanguage(event.target.value);
+            console.log(`Language changed to: ${event.target.value}`);
+        } else {
+            console.error("setLanguage is not a function. Check LanguageContext.");
+        }
     };
 
     return (

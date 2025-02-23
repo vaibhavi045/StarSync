@@ -1,12 +1,14 @@
-import { createContext, useState, useEffect } from "react";
+import { createContext, useContext, useState, useEffect } from "react";
 
 export const LanguageContext = createContext();
 
 export const LanguageProvider = ({ children }) => {
     // Retrieve language from localStorage or default to English
-    const [language, setLanguage] = useState(localStorage.getItem("appLanguage") || "en");
+    const [language, setLanguage] = useState(() => {
+        return localStorage.getItem("appLanguage") || "en";
+    });
 
-    // Function to change language with validation
+    // Function to change language
     const changeLanguage = (lang) => {
         const supportedLanguages = ["en", "hi", "mr"]; // English, Hindi, Marathi
 
@@ -18,17 +20,22 @@ export const LanguageProvider = ({ children }) => {
         }
     };
 
-    // Sync state with localStorage on load
+    // Sync state with localStorage only on mount
     useEffect(() => {
         const savedLanguage = localStorage.getItem("appLanguage");
-        if (savedLanguage) {
+        if (savedLanguage && savedLanguage !== language) {
             setLanguage(savedLanguage);
         }
-    }, []);
+    }, []); // Empty dependency array ensures it runs only once
 
     return (
-        <LanguageContext.Provider value={{ language, changeLanguage }}>
+        <LanguageContext.Provider value={{ language, changeLanguage }}>  
             {children}
         </LanguageContext.Provider>
     );
+};
+
+// ✅ Custom Hook for easy access to LanguageContext
+export const useLanguage = () => {
+    return useContext(LanguageContext);
 };

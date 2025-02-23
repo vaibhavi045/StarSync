@@ -1,0 +1,13 @@
+.about-container {
+    padding: 20px;
+    text-align: center;
+}
+
+.about-container h1 {
+    color: #007bff;
+}
+
+.about-container p {
+    font-size: 1.1rem;
+    line-height: 1.6;
+}

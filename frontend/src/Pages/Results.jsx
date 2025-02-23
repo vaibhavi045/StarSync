@@ -1,7 +1,7 @@
 import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import TextToSpeech from "../multilingual/TextToSpeech";
-import { Button } from "../common/Button";
+import TextToSpeech from "../Components/multilingual/TextToSpeech";
+import Button from "../Components/common/Button";
 
 const Results = () => {
     const navigate = useNavigate();

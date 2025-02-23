@@ -19,7 +19,7 @@ export const USER_INFO_KEY = "userInfo";
 // 🌍 API Endpoints
 export const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "http://localhost:5000/api";
 export const AUTH_ENDPOINTS = {
-    REGISTER: `${API_BASE_URL}/auth/register`,
+    REGISTER: `${API_BASE_URL}/auth/signup`,
     LOGIN: `${API_BASE_URL}/auth/login`,
     FORGOT_PASSWORD: `${API_BASE_URL}/auth/forgot-password`,
     RESET_PASSWORD: `${API_BASE_URL}/auth/reset-password`,

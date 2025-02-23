@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
@@ -6,31 +6,38 @@ const Login = () => {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
+    const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
+
+    // Redirect to dashboard if already logged in
+    useEffect(() => {
+        if (localStorage.getItem("token")) {
+            navigate("/dashboard");
+        }
+    }, [navigate]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError("");
+        setLoading(true);
 
         if (!email || !password) {
             setError("Please fill in all fields.");
+            setLoading(false);
             return;
         }
 
         try {
-            const response = await axios.post("http://localhost:5000/api/auth/login", {
-                email,
-                password,
-            });
+            const { data } = await axios.post("http://localhost:5000/api/auth/login", { email, password });
 
-            if (response.data.success) {
-                localStorage.setItem("token", response.data.token);
-                navigate("/dashboard"); // Redirect after login
-            } else {
-                setError(response.data.message || "Invalid credentials");
-            }
+            localStorage.setItem("token", data.token);
+            localStorage.setItem("user", JSON.stringify(data.user));
+
+            navigate("/dashboard"); // Redirect after login
         } catch (error) {
-            setError("Login failed. Please try again.");
+            setError(error.response?.data?.message || "Login failed. Please try again.");
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -47,7 +54,7 @@ const Login = () => {
                             type="email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-full px-3 py-2 border rounded-md text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
                             placeholder="Enter your email"
                             required
                         />
@@ -59,7 +66,7 @@ const Login = () => {
                             type="password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-full px-3 py-2 border rounded-md text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
                             placeholder="Enter your password"
                             required
                         />
@@ -67,17 +74,17 @@ const Login = () => {
 
                     <button
                         type="submit"
-                        className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition"
+                        className={`w-full text-white py-2 rounded-md transition ${
+                            loading ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"
+                        }`}
+                        disabled={loading}
                     >
-                        Login
+                        {loading ? "Logging in..." : "Login"}
                     </button>
                 </form>
 
                 <div className="text-center mt-4">
-                    <a
-                        href="/forgot-password"
-                        className="text-blue-600 hover:underline block"
-                    >
+                    <a href="/forgot-password" className="text-blue-600 hover:underline block">
                         Forgot Password?
                     </a>
                     <p className="mt-2">

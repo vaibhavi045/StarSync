@@ -1,4 +1,4 @@
-require("dotenv").config();
+require("dotenv").config({ path: "./config.env" });
 const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
@@ -19,7 +19,7 @@ app.use(helmet());
 app.use(morgan("dev"));
 
 // Validate required environment variables
-const REQUIRED_ENV_VARS = ["MONGO_URI", "PORT"];
+const REQUIRED_ENV_VARS = ["MONGO_URI", "PORT", "JWT_SECRET"];
 const missingVars = REQUIRED_ENV_VARS.filter((key) => !process.env[key]);
 
 if (missingVars.length) {
@@ -46,9 +46,9 @@ const safeRequire = (routePath, routeName) => {
 app.use("/api/auth", safeRequire("./Routes/auth", "Auth"));
 app.use("/api/speech-to-text", safeRequire("./Routes/speech", "Speech-to-Text"));
 app.use("/api/translate", safeRequire("./Routes/translate", "Translate"));
-app.use("/api/medical-data", safeRequire("./Models/MedicalData", "Medical Data"));
-app.use("/api/files", safeRequire("./Routes/fileUpload", "File Upload"));
-app.use("/api/files", safeRequire("./Routes/fileDelete", "File Delete"));
+app.use("/api/medical-data", safeRequire("./Routes/medicalData", "Medical Data"));
+app.use("/api/files/upload", safeRequire("./Routes/fileUpload", "File Upload"));
+app.use("/api/files/delete", safeRequire("./Routes/fileDelete", "File Delete"));
 
 // Root endpoint
 app.get("/", (req, res) => {
@@ -68,8 +68,9 @@ const server = app.listen(PORT, () => {
 });
 
 // Start PeerJS Server
-const peerServer = PeerServer({ port: 9000, path: "/peerjs" });
-console.log("✅ PeerJS Server Running on Port 9000");
+const peerServer = PeerServer({ port: 9000, path: "/peerjs" }, () => {
+    console.log("✅ PeerJS Server Running on Port 9000");
+});
 
 // Graceful Shutdown Handling
 const shutdown = async () => {

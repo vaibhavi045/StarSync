@@ -5,8 +5,11 @@ const User = require("../Models/User");
 // Utility function for sending error responses
 const sendErrorResponse = (res, message, status = 400) => res.status(status).json({ error: message });
 
+// Utility function to generate JWT token
+const generateToken = (userId) => jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: "7d" });
+
 // @desc   Register a new user
-// @route  POST /api/auth/register
+// @route  POST /api/auth/signup
 // @access Public
 exports.registerUser = async (req, res) => {
     try {
@@ -19,17 +22,15 @@ exports.registerUser = async (req, res) => {
 
         if (password.length < 6) return sendErrorResponse(res, "Password must be at least 6 characters long");
 
-        let user = await User.findOne({ email });
-        if (user) return sendErrorResponse(res, "User already exists");
+        const existingUser = await User.findOne({ email });
+        if (existingUser) return sendErrorResponse(res, "User already exists");
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        user = new User({ name, email, password: hashedPassword });
-        await user.save();
+        const newUser = await User.create({ name, email, password: hashedPassword });
+        const token = generateToken(newUser.id);
 
-        const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: "7d" });
-
-        res.status(201).json({ token, userId: user.id, name: user.name, email: user.email });
+        res.status(201).json({ token, userId: newUser.id, name: newUser.name, email: newUser.email });
     } catch (error) {
         console.error("Register Error:", error);
         sendErrorResponse(res, "Server error", 500);
@@ -51,7 +52,7 @@ exports.loginUser = async (req, res) => {
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) return sendErrorResponse(res, "Invalid credentials");
 
-        const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: "7d" });
+        const token = generateToken(user.id);
 
         res.json({ token, userId: user.id, name: user.name, email: user.email });
     } catch (error) {

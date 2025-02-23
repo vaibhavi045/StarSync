@@ -7,7 +7,7 @@ const Home = () => {
     const navigate = useNavigate();
 
     const startScreening = () => {
-        navigate("/screening");
+        navigate("/home");
     };
 
     return (

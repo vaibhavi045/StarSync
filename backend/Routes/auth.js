@@ -11,10 +11,10 @@ const router = express.Router();
 // Utility function to send error response
 const sendErrorResponse = (res, message, status = 400) => res.status(status).json({ error: message });
 
-// @route   POST /api/auth/register
+// @route   POST /api/auth/signup
 // @desc    Register a new user
 // @access  Public
-router.post("/register", async (req, res) => {
+router.post("/signup", async (req, res) => {
     try {
         const { name, email, password } = req.body;
 
@@ -42,7 +42,7 @@ router.post("/register", async (req, res) => {
 
         res.status(201).json({ token, userId: user.id, name: user.name, email: user.email });
     } catch (error) {
-        console.error("❌ Register Error:", error);
+        console.error("❌ Signup Error:", error);
         sendErrorResponse(res, "Server error", 500);
     }
 });
