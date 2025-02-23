@@ -10,15 +10,14 @@ const Navbar = () => {
             <div className="container mx-auto flex justify-between items-center">
                 {/* Logo */}
                 <Link to="/" className="text-2xl font-extrabold flex items-center space-x-2">
-                    <span>🌟</span>
-                    <span>StarSync</span>
+                    <h1>Heal Vaani - </h1>
+                    <h3>Voice Of Healing</h3>
                 </Link>
 
                 {/* Desktop Navigation */}
                 <div className="hidden md:flex items-center space-x-6">
                     <Link to="/" className="hover:text-gray-300 transition">Home</Link>
                     <Link to="/about" className="hover:text-gray-300 transition">About</Link>
-                    <Link to="/screening" className="hover:text-gray-300 transition">Screening</Link>
                     <Link to="/results" className="hover:text-gray-300 transition">Results</Link>
                     <LanguageSelector />
                     <Link to="/login" className="bg-white text-blue-600 px-4 py-2 rounded-lg hover:bg-gray-200 transition">

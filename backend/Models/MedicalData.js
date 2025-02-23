@@ -4,43 +4,44 @@ const medicalDataSchema = new mongoose.Schema(
     {
         userId: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: "User", // References the User model
+            ref: "User",
             required: true
         },
         symptoms: {
-            type: [String], // Array of symptoms
-            required: true
+            type: [String],
+            required: [true, "Symptoms are required"],
+            validate: {
+                validator: (arr) => arr.length > 0,
+                message: "At least one symptom must be provided."
+            }
         },
         diagnosis: {
-            type: String, // Diagnosed condition
-            required: true
+            type: String,
+            required: [true, "Diagnosis is required"],
+            trim: true
         },
         prescription: {
-            type: String, // Suggested medication or treatment
-            default: "No prescription provided"
+            type: String,
+            default: "No prescription provided",
+            trim: true
         },
         reports: {
-            type: [String], // URLs or paths to medical reports
-            default: []
+            type: [String],
+            default: [],
+            validate: {
+                validator: (arr) => arr.every(url => /^https?:\/\/.+/.test(url)),
+                message: "Each report must be a valid URL."
+            }
         },
         language: {
             type: String,
-            enum: ["en", "es", "fr", "de", "hi"], // Example: English, Spanish, French, German, Hindi
+            enum: ["en", "es", "fr", "de", "hi"],
             default: "en"
-        },
-        createdAt: {
-            type: Date,
-            default: Date.now
-        },
-        updatedAt: {
-            type: Date,
-            default: Date.now
         }
     },
-    { timestamps: true } // Automatically adds createdAt & updatedAt fields
+    { timestamps: true } // Adds createdAt & updatedAt automatically
 );
 
-// Create the model from schema
 const MedicalData = mongoose.model("MedicalData", medicalDataSchema);
 
 module.exports = MedicalData;

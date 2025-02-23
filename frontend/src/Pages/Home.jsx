@@ -6,8 +6,8 @@ import Button from "../Components/common/Button.jsx";
 const Home = () => {
     const navigate = useNavigate();
 
-    const startScreening = () => {
-        navigate("/home");
+    const tryMe = () => {
+        navigate("/try-me"); // Change this to the actual route for "Try Me"
     };
 
     return (
@@ -19,9 +19,18 @@ const Home = () => {
                 </p>
 
                 {/* Language Selection Component */}
-                <LanguageSelector />
+                <div className="mb-6">
+                    <LanguageSelector />
+                </div>
 
-                <Button text="Start Screening" onClick={startScreening} className="mt-6" />
+                {/* Try ChatBot Button */}
+                <div className="flex justify-center">
+                    <Button 
+                        text="Try ChatBot" 
+                        onClick={tryMe} 
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-lg text-xl font-semibold"
+                    />
+                </div>
             </div>
         </div>
     );

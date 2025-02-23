@@ -39,8 +39,12 @@ const Results = () => {
                 )}
 
                 <div className="mt-6 flex gap-4">
-                    <Button text="Back to Home" onClick={() => navigate("/")} className="bg-blue-500" />
-                    <Button text="Retake Screening" onClick={() => navigate("/screening")} className="bg-green-500" />
+                    <a href="/" className="bg-gray-300 text-blue-600 px-6 py-2 rounded-lg hover:bg-gray-400 transition">
+                        Back to Home
+                    </a>
+                    <a href="/" className="bg-gray-300 text-blue-600 px-6 py-2 rounded-lg hover:bg-gray-400 transition">
+                        Retake screening
+                    </a>
                 </div>
             </div>
         </div>
