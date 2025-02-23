@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 
 const Login = () => {
@@ -9,7 +9,7 @@ const Login = () => {
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
 
-    // Redirect to dashboard if already logged in
+    // Redirect if already logged in
     useEffect(() => {
         if (localStorage.getItem("token")) {
             navigate("/dashboard");
@@ -22,7 +22,7 @@ const Login = () => {
         setLoading(true);
 
         if (!email || !password) {
-            setError("Please fill in all fields.");
+            setError("Please enter both email and password.");
             setLoading(false);
             return;
         }
@@ -33,9 +33,10 @@ const Login = () => {
             localStorage.setItem("token", data.token);
             localStorage.setItem("user", JSON.stringify(data.user));
 
-            navigate("/dashboard"); // Redirect after login
+            alert("Login Successful!");
+            navigate("/dashboard"); // Redirect to dashboard
         } catch (error) {
-            setError(error.response?.data?.message || "Login failed. Please try again.");
+            setError(error.response?.data?.message || "Invalid credentials. Try again.");
         } finally {
             setLoading(false);
         }
@@ -45,6 +46,7 @@ const Login = () => {
         <div className="flex justify-center items-center min-h-screen bg-gray-100">
             <div className="w-full max-w-md bg-white p-6 rounded-lg shadow-md">
                 <h2 className="text-2xl font-semibold text-center mb-4">Login</h2>
+
                 {error && <p className="text-red-500 text-center">{error}</p>}
 
                 <form onSubmit={handleSubmit} className="space-y-4">
@@ -84,14 +86,14 @@ const Login = () => {
                 </form>
 
                 <div className="text-center mt-4">
-                    <a href="/forgot-password" className="text-blue-600 hover:underline block">
+                    <Link to="/forgot-password" className="text-blue-600 hover:underline block">
                         Forgot Password?
-                    </a>
+                    </Link>
                     <p className="mt-2">
                         Don't have an account?{" "}
-                        <a href="/signup" className="text-blue-600 hover:underline">
+                        <Link to="/signup" className="text-blue-600 hover:underline">
                             Sign Up
-                        </a>
+                        </Link>
                     </p>
                 </div>
             </div>

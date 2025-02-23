@@ -10,26 +10,34 @@ const Signup = () => {
         confirmPassword: "",
     });
 
-    const [error, setError] = useState("");
-    const [loading, setLoading] = useState(false);
+    const [message, setMessage] = useState(""); // Success message
+    const [error, setError] = useState(""); // Error message
+    const [loading, setLoading] = useState(false); // Loading state
     const navigate = useNavigate();
 
+    // Handle input change
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData((prevData) => ({
             ...prevData,
             [name]: value,
         }));
+
+        // Clear previous messages
+        setError("");
+        setMessage("");
     };
 
-    const isValidEmail = (email) => {
-        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-    };
+    // Email validation function
+    const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
+    // Handle form submission
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError("");
+        setMessage("");
 
+        // Validate inputs
         if (!formData.name || !formData.email || !formData.password || !formData.confirmPassword) {
             setError("All fields are required");
             return;
@@ -58,10 +66,17 @@ const Signup = () => {
                 password: formData.password,
             });
 
-            alert(response.data.message);
-            navigate("/login");
+            console.log("Signup Response:", response.data);
+
+            if (response.data.success) {
+                setMessage(response.data.message || "Signup successful!");
+                setTimeout(() => navigate("/login"), 2000); // Redirect after 2 seconds
+            } else {
+                setError(response.data.message || "Signup failed. Please try again.");
+            }
         } catch (error) {
-            setError(error.response?.data?.message || "Something went wrong. Please try again.");
+            console.error("Signup Error:", error.response?.data || error.message);
+            setError(error.response?.data?.message || "Signup failed. Please try again.");
         } finally {
             setLoading(false);
         }
@@ -71,8 +86,9 @@ const Signup = () => {
         <div className="min-h-screen flex items-center justify-center bg-gray-50">
             <div className="bg-white p-6 md:p-8 rounded-lg shadow-lg w-full max-w-md">
                 <h2 className="text-2xl font-bold text-center text-gray-800 mb-4">Create Your Account</h2>
-                
+
                 {error && <p className="text-red-500 text-sm text-center">{error}</p>}
+                {message && <p className="text-green-500 text-sm text-center">{message}</p>}
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
@@ -139,7 +155,7 @@ const Signup = () => {
                 </form>
 
                 <p className="text-sm text-center mt-3">
-                    Already have an account? {" "}
+                    Already have an account?{" "}
                     <Link to="/login" className="text-blue-500 hover:underline">
                         Login
                     </Link>

@@ -1,15 +1,21 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { BrowserRouter as Router } from "react-router-dom"; // ✅ The only Router
+import { BrowserRouter as Router } from "react-router-dom";
 import App from "./App";
 import "./index.css";
 import "./styles/global.css";
 
-const root = ReactDOM.createRoot(document.getElementById("root"));
+const rootElement = document.getElementById("root");
+
+if (!rootElement) {
+  throw new Error("Root element not found. Ensure your HTML file has an element with id='root'.");
+}
+
+const root = ReactDOM.createRoot(rootElement);
 
 root.render(
   <React.StrictMode>
-    <Router> {/* ✅ Router should only be here */}
+    <Router>
       <App />
     </Router>
   </React.StrictMode>

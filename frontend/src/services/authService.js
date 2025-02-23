@@ -4,7 +4,7 @@ const API_URL = "/api/auth"; // Adjust this according to your backend setup
 
 const authService = {
     // Register User
-    async register(name, email, password) {
+    async signup(name, email, password) {
         try {
             const response = await axios.post(`${API_URL}/register`, { name, email, password });
             if (response.data.token) {
